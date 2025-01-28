@@ -1,0 +1,61 @@
+#macos
+system_profiler SPSoftwareDataType
+sw_vers
+sysctl -n machdep.cpu.brand_string
+sysctl -n hw.memsize
+df -H
+mount
+diskutil list
+ifconfig
+netstat -anvp tcp
+curl -4 ifconfig.co --silent
+ping -c 2 8.8.8.8
+which python3
+which gcc
+sysctl -n hw.logicalcpu
+sysctl -n hw.physicalcpu
+w | awk '{print $1}'
+dscl . -list /Users
+
+#linux
+uname -a
+cat /etc/os-release
+hostnamectl
+lscpu
+free -h
+lsblk
+nproc
+lspci -nnk
+df -hT
+mount | column -t
+ls -l /dev/disk/by-id
+ip a
+ss -tuln
+curl -4 ifconfig.co --silent
+ping -c 2 8.8.8.8
+which python3
+which gcc
+dpkg --list | wc -l
+rpm -qa | wc -l
+who -a
+getent passwd | cut -d: -f1
+
+#windows
+systeminfo
+ver
+wmic os get Caption,Version,BuildNumber /value
+wmic cpu get Name,NumberOfCores,NumberOfLogicalProcessors /value
+wmic memorychip get Capacity /value
+wmic diskdrive get Size,Model /value
+wmic logicaldisk get DeviceID,Size,FreeSpace /value
+fsutil fsinfo drives
+ipconfig /all
+netstat -ano
+ping 8.8.8.8 -n 2
+where python
+where gcc
+powershell -Command "Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion"
+whoami
+net user
+query user
+powershell -Command "Get-NetIPAddress | Format-Table InterfaceAlias,IPAddress"
