@@ -142,7 +142,7 @@ def run_hpc_job():
         return
 
     status_label.config(text=f"Jupyter Notebook created successfully!")
-    jupyter_button.config(state=tk.NORMAL, command=lambda: open_jupyter(session_manager.jupyter_url))
+    #jupyter_button.config(state=tk.NORMAL, command=lambda: open_jupyter(session_manager.jupyter_url))
 
 
 def launch_job():
@@ -287,6 +287,6 @@ jobs_table.pack(expand=True, fill="both", pady=10)
 jobs_table.bind("<Double-1>", lambda e: delete_job(jobs_table.selection()[0]))
 
 refresh_button = ttk.Button(tab2_frame, text="\U0001F504 Refresh Jobs", command=show_running_jobs)
-refresh_button.pack(pady=10, ipadx=10)
+refresh_button.pack(pady=5, ipadx=10)
 
 root.mainloop()
