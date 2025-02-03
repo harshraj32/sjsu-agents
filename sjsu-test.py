@@ -84,11 +84,18 @@ class HPCSessionManager:
             self.jupyter_url = f"http://127.0.0.1:{self.port}/?token={token}"
 
             print(f"✔ Jupyter Notebook running at: {self.jupyter_url}")
-            return True
+            
+
+            if not self.setup_ssh_tunnel():
+                return False, None
+
+            return True, self.jupyter_url
 
         except Exception as e:
             print(f"❌ Error: {e}")
             return False
+        
+
 
     def setup_ssh_tunnel(self):
         """Sets up a persistent SSH tunnel."""
@@ -111,20 +118,27 @@ class HPCSessionManager:
             print(f"❌ SSH Tunnel Error: {e}")
             return False
 
-    def start(self, num_nodes, num_tasks,cpu_time):
-        """Starts the HPC session and SSH tunnel in separate threads."""
-        if not self.request_interactive_session(num_nodes, num_tasks,cpu_time):
-            messagebox.showerror("Error", "Failed to start Jupyter Notebook.")
+    def start(self, num_nodes, num_tasks, cpu_time):
+        def session_wrapper():
+            self.request_interactive_session(num_nodes, num_tasks, cpu_time)
+            if not self.node_name:
+                root.after(0, lambda: messagebox.showerror("Error", "Failed to start Jupyter Notebook."))
+            else:
+                root.after(0, lambda: update_jupyter_button(self.jupyter_url))
+
+        session_thread = threading.Thread(target=session_wrapper)
+        session_thread.start()
+        session_thread.join()
+
+        if not self.node_name:
             return False
 
-        tunnel_thread = threading.Thread(target=self.setup_ssh_tunnel, daemon=True)
+        tunnel_thread = threading.Thread(target=self.setup_ssh_tunnel)
         tunnel_thread.start()
-
+        tunnel_thread.join()
         return True
 
-
 def run_hpc_job():
-    """Runs the job on a separate thread to prevent Tkinter from freezing."""
     username = username_entry.get()
     password = password_entry.get()
     use_gpu = gpu_var.get()
@@ -132,27 +146,25 @@ def run_hpc_job():
     cpu_time = time_entry.get()
     num_tasks = int(tasks_entry.get())
 
-    session_manager = HPCSessionManager(username, password, use_gpu,cpu_time, num_nodes, num_tasks)
-
+    session_manager = HPCSessionManager(username, password, use_gpu, cpu_time, num_nodes, num_tasks)
     status_label.config(text="Requesting compute resources...")
     root.update()
 
-    if not session_manager.start(num_nodes, num_tasks,cpu_time):
+    if not session_manager.start(num_nodes, num_tasks, cpu_time):
         status_label.config(text="❌ HPC Job Failed.")
         return
 
-    status_label.config(text=f"Jupyter Notebook created successfully!")
-    #jupyter_button.config(state=tk.NORMAL, command=lambda: open_jupyter(session_manager.jupyter_url))
-
+    status_label.config(text="Jupyter Notebook created successfully!")
+    jupyter_button.config(state=tk.NORMAL, text="Open Jupyter", command=lambda: open_jupyter(session_manager.jupyter_url))
 
 def launch_job():
-    """Starts the HPC job in a separate thread."""
-    threading.Thread(target=run_hpc_job, daemon=True).start()
-
+    threading.Thread(target=run_hpc_job).start()
 
 def open_jupyter(url):
-    """Opens Jupyter Notebook in the default web browser."""
-    webbrowser.open(url)
+    if url:
+        webbrowser.open(url)
+    else:
+        messagebox.showerror("Error", "Jupyter URL not available.")
 
 
 def show_running_jobs():
@@ -213,6 +225,8 @@ def delete_job(item):
     except Exception as e:
         messagebox.showerror("Error", f"Failed to delete job: {e}")
 
+def update_jupyter_button(url):
+    jupyter_button.config(state=tk.NORMAL, text="Open Jupyter", command=lambda: open_jupyter(url))
 
 
 # Initialize main window
